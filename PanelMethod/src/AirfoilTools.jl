@@ -16,6 +16,12 @@ const StringN = String31  # expect that airfoil names from airfoiltools.com are 
 const _name_cache = StringN[]  # cache result from airfoil_names()
 const NAMES_COUNT_HINT = 1750  # expected length of _name_cache
 
+
+"""
+    airfoil_names()::Vector{AbstractString}
+
+Return a list of all airfoil names available on $SITE_BASE.
+"""
 function airfoil_names()
     length(_name_cache) > 0 && return _name_cache
     
@@ -44,12 +50,23 @@ function _each_href(html_str::AbstractString)
             for m in eachmatch(_HREF_REGEX, html_str))
 end
 
+"""
+    get_airfoil(name::AbstractString)::InterpolatedAirfoil
 
+Retrieve an airfoil by name from $SITE_BASE.
+"""
 function get_airfoil(name::AbstractString)
     points, LE_idx = get_airfoil_points(name)
     return InterpolatedAirfoil(points, points[LE_idx], clockwise=false)
 end
 
+"""
+    get_airfoil_points(name::AbstractString) -> (points, leading_edge_index)
+
+Get the defining points of `name`. `points` is a vector of complex points starting at the
+trailing edge, over the upper then lower surfaces, and ending at the trailing edge.
+`leading_edge_index` is the index of the leading edge in `points`.
+"""
 function get_airfoil_points(name::AbstractString)
     url = DATFILE_URL * "?airfoil=" * name
     str = (String ∘ take!)(Downloads.download(url, IOBuffer()))
@@ -81,7 +98,7 @@ function _get_lednicer_points(coords::Vector{T}, upper::Int, lower::Int) where T
     return (points, upper)
 end
 
-function _get_selig_points(coords::Vector{Complex})
+function _get_selig_points(coords::Vector{<:Complex})
     LE_idx = argmin(abs2 ∘ real, coords)
     return (coords, LE_idx)
 end

@@ -14,6 +14,11 @@ export
 const SubVector = SubArray{T, 1, Vector{T}, Tuple{UnitRange{Int}}, true} where T
 
 
+"""
+    VortexStrengths(sheetgroup::SheetGroup)
+    
+Storage for the vortex strengths necessary to describe `sheetgroup`.
+"""
 struct VortexStrengths{T<:AbstractFloat}
     flat::Vector{T}
     vec::Vector{SubVector{T}}
@@ -34,21 +39,21 @@ end
 
 
 """
-    Flow{T, G<:SheetGroup{T}, C<:AbstractChord}
+    Flow(sheets, chord::AbstractChord, [γ::VortexStrengths,] v::Number)
+    
+Create a flow from `sheets` with complex freestream velocity `v` and store the resulting
+vortex strengths in `γ`. `chord` determines how quantities are nondimensionalized. `sheets`
+may be a single [`Sheet`](@ref), vector of [`Sheet`](@ref), or [`SheetGroup`](@ref).
 
-Inviscid flow predicted by the panel method.
+    Flow(sheets, chord::AbstractChord, [γ::VortexStrengths,] v::Real, α::Real)
+
+Create a flow with freestream velocity of magnitude `v` and angle of attaack `α`.
 """
 struct Flow{T, G<:SheetGroup{T}, C<:AbstractChord}
     sheetgroup::G
     chord::C
     γ::VortexStrengths{T}
     u_inf::Complex{T}
-    @doc """
-        Flow(sheets, chord::AbstractChord, [γ::VortexStrengths], v::Number)
-    
-    Create a flow from `sheets` with freestream velocity `v` and store the resulting vortex
-    strengths in `γ`. `chord` determines how quantities are nondimensionalized.
-    """
     function Flow(sheetgroup::G, chord::C, γ::VortexStrengths{T}, v::Number
                   ) where {T, G<:SheetGroup{T}, C<:AbstractChord}
         u_inf::Complex{T} = v
@@ -57,12 +62,6 @@ struct Flow{T, G<:SheetGroup{T}, C<:AbstractChord}
     end
 end
 
-"""
-    Flow(sheets, chord::AbstractChord, [γ::VortexStrengths], v::Real, α::Real)
-
-Create a flow with freestream velocity determined by magnitude `v` and angle of attaack
-`α`.
-"""
 function Flow(sheetgroup::SheetGroup{T}, chord::AbstractChord, γ::VortexStrengths{T},
               v::Real, α::Real) where T
     return Flow(sheetgroup, chord, γ, v * cis(α) * chordunit(chord))
@@ -78,21 +77,21 @@ function Flow(sheets, chord::AbstractChord, args::Vararg{Any, N}) where N
 end
 
 """
-    freestream(flow)
+    freestream(flow::Flow)
 
 The complex freestream velocity of `flow`.
 """
 freestream(flow::Flow) = flow.u_inf
 
 """
-    angle_of_attack(flow)
+    angle_of_attack(flow::Flow)
 
 The angle of attack of `flow`.
 """
 angle_of_attack(flow::Flow) = angle(conj(chordvec(flow.chord)) * freestream(flow))
 
 """
-    velocity(flow, z)
+    velocity(flow::Flow, z)
 
 The flow velocity at `z`.
 """
@@ -122,7 +121,7 @@ function velocity(flow::Flow{T}, z::Number) where T
 end
 
 """
-    streamfunction(flow, z)
+    streamfunction(flow::Flow, z)
 
 The stream function at `z`.
 """
@@ -152,7 +151,7 @@ function streamfunction(flow::Flow{T}, z::Number) where T
 end
 
 """
-    circulation(flow)
+    circulation(flow::Flow)
 
 The clockwise circulation around all the sheets in `flow`.
 """
@@ -169,14 +168,14 @@ function circulation(flow::Flow{T}) where T
 end
 
 """
-    pressure_coeff(flow, z)
+    pressure_coeff(flow::Flow, z)
 
 The pressure coefficient at `z`.
 """
 pressure_coeff(flow::Flow, z::Number) = 1 - abs2(velocity(flow, z)) / abs2(freestream(flow))
 
 """
-    panel_ndim_force(flow)
+    panel_ndim_force(flow::Flow)
 
 The total complex pressure force on every sheet found by summing that of each panel.
 Nondimensionalized by chordlength.
@@ -194,14 +193,14 @@ function panel_ndim_force(flow::Flow{T}) where T
 end
 
 """
-    ndim_force(flow)
+    ndim_force(flow::Flow)
 
 The total complex force found by assuming the Kutta-Joukowski theorem.
 """
 ndim_force(flow::Flow) = 1im * freestream(flow) * lift_coeff(flow)
 
 """
-    lift_coeff(flow)
+    lift_coeff(flow::Flow)
 
 The total lift coefficient found by assuming the Kutta-Joukowski theorem.
 """
@@ -232,7 +231,7 @@ function moment_coeff(flow::Flow{T}, z::Number) where T
 end
 
 """
-    center_of_pressure(flow)
+    center_of_pressure(flow::Flow)
 
 Return the center of pressure as a fraction of chord length of `flow.chord`.
 """
@@ -242,7 +241,7 @@ function center_of_pressure(flow::Flow)
 end
 
 """
-    aerodynamic_center(flow)
+    aerodynamic_center(flow::Flow)
 
 The aerodynamic center of `flow`'s underlying `SheetGroup` and chord.
 """

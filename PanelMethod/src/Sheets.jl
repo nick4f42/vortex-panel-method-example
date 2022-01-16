@@ -14,6 +14,8 @@ using ..Airfoils
 
 A connected sequence of line segments that define a vortex sheet.
 """
+Sheet
+
 struct Sheet{T<:AbstractFloat}
     endpoints::Vector{Complex{T}}
     ctrl_points::Vector{Complex{T}}
@@ -21,7 +23,7 @@ struct Sheet{T<:AbstractFloat}
     @doc """
         Sheet{T}(npanels)
     
-    Create an undefined sheet with `npanels` panels of float type `T`.
+    Create an uninitialized sheet with `npanels` panels using float type `T`.
     """
     function Sheet{T}(npanels::Integer) where T
         npanels > 1 || throw(DomainError(npanels, "npanels must be greater than 1"))
@@ -36,7 +38,7 @@ end
 """
     Sheet(airfoil, npanels, offset=1e-8)
 
-Create a sheet with `npanels` panels and vertices on `airfoil`.
+Create a sheet with `npanels` panels and initialize it with `airfoil`.
 
 `offset` determines the distance (as a fraction of chord length) that the control points
 used for calculations are offset from each panel's midpoint.
@@ -52,7 +54,7 @@ end
 """
     update!(sheet::Sheet, airfoil::Airfoil, offset=1e-8)
 
-The in place version of `Sheet(airfoil, n, offset)` if `sheet` has `n` panels.
+The in-place version of `Sheet(airfoil, npanels, offset)`.
 """
 function update!(sheet::Sheet{T}, airfoil::Airfoil{T}, offset::Real = T(1e-8)) where T
     endpoints = sheet.endpoints
@@ -78,24 +80,26 @@ end
 
 
 """
-    SheetGroup{T<:AbstractFloat, S<:AbstractVector{Sheet{T}}}
+    SheetGroup{T, S}
 
 A group of `Sheet`s and the solution to the linear system determining the vortex strength
 distribution.
 
 If any of the underlying sheets of `group` are mutated, `update!(group)` must be called
-to resolve the linear system.
+to re-solve the linear system.
 """
+SheetGroup
+
 struct SheetGroup{T<:AbstractFloat, S<:AbstractVector{Sheet{T}}}
     sheets::S
     _A::LinearAlgebra.Transpose{T, Matrix{T}}
     _x_re::Vector{T}
     _x_im::Vector{T}
     @doc """
-        SheetGroup(sheets, [undef]))
+        SheetGroup(sheets, [undef])
     
-    Create a `SheetGroup` from a single or vector of `Sheet`. If `undef` is provided,
-    do not initialize the data with `update!`.
+    Create a `SheetGroup` from a vector of (or single) `Sheet`. If `undef` is provided,
+    do not initialize the data with `update!(sheetgroup)`.
     """
     function SheetGroup(sheets::S, ::UndefInitializer
                         ) where {T, S<:AbstractVector{Sheet{T}}}
@@ -136,7 +140,7 @@ Base.length(group::SheetGroup) = length(group.sheets)
 Base.eltype(::Type{SheetGroup{T}}) where {T} = Sheet{T}
 Base.IndexStyle(::Type{SheetGroup}) = IndexLinear()
 
-
+# The number of panel endpoints in a single sheet or group of sheets.
 _point_count(sheet::Sheet) = length(sheet.endpoints)
 _point_count(group::SheetGroup) = sum(_point_count, group)
 
@@ -146,7 +150,7 @@ _point_count(group::SheetGroup) = sum(_point_count, group)
 
 Returns the aerodynamic center `t` of `sheets` as a fraction of chord length.
 
-`chordline(chord, t)` retrieves the coordinate of the aerodynamic center. `sheets`
+`Airfoils.chordline(chord, t)` retrieves the coordinate of the aerodynamic center. `sheets`
 may be of type `Sheet`, `AbstractVector{Sheet}`, or `SheetGroup`.
 """
 function aerodynamic_center(sheetgroup::SheetGroup{T}, chord::AbstractChord) where T
