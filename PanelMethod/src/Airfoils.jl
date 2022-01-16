@@ -187,8 +187,6 @@ A mirrored version of `base` across its chord line. Alias for [`MirrorAirfoil`](
 """
 const mirror = MirrorAirfoil
 
-Xform(airfoil::MirrorAirfoil) = Xform(airfoil.base)
-
 for func in (:leading_edge, :trailing_edge, :Xform)
     @eval $func(airfoil::MirrorAirfoil) = $func(airfoil.base)
 end

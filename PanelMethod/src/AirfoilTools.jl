@@ -7,13 +7,14 @@ using InlineStrings: String31
 
 using ..Airfoils: InterpolatedAirfoil
 
+
 const SITE_BASE = "http://airfoiltools.com"
 const SEARCH_URL = SITE_BASE * "/search/airfoils"
 const DATFILE_URL = SITE_BASE * "/airfoil/lednicerdatfile"
 
-const StringN = String31
-const _name_cache = StringN[]
-const NAMES_COUNT_HINT = 1750
+const StringN = String31  # expect that airfoil names from airfoiltools.com are < 32 bytes
+const _name_cache = StringN[]  # cache result from airfoil_names()
+const NAMES_COUNT_HINT = 1750  # expected length of _name_cache
 
 function airfoil_names()
     length(_name_cache) > 0 && return _name_cache
@@ -54,7 +55,7 @@ function get_airfoil_points(name::AbstractString)
     str = (String ∘ take!)(Downloads.download(url, IOBuffer()))
 
     coord_iter = (
-        tuple(map(x -> parse(Float64, x), split(line))...)
+        map(x -> parse(Float64, x), split(line))
         for line in split(str, '\n', keepempty=false)
         if !all(isspace, line) && !occursin(r"[^\-.\d\s]", line)
     )
