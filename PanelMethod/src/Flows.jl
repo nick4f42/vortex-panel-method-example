@@ -11,6 +11,7 @@ export
     VortexStrengths, Flow, freestream, angle_of_attack, velocity, streamfunction,
     circulation, pressure_coeff, ndim_force, lift_coeff, moment_coeff, center_of_pressure
 
+
 const SubVector = SubArray{T, 1, Vector{T}, Tuple{UnitRange{Int}}, true} where T
 
 
@@ -128,7 +129,7 @@ The stream function at `z`.
 function streamfunction(flow::Flow{T}, z::Complex{T}) where T
     ψ::T = 0
     for (s, γ) in zip(flow.sheetgroup, flow.γ.vec)
-        Δψ::Complex{T} = 0
+        Δψ::T = 0
         for (z1, z2, γ1, γ2) in zip(s.endpoints, drop(s.endpoints, 1), γ, drop(γ, 1))
             tmp1 = z - z1
             tmp2 = z - z2
