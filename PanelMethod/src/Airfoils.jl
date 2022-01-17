@@ -253,7 +253,7 @@ is_clockwise(::JoukowskyAirfoil) = false
 An airfoil parameterization formed by interpolating a set of points.
 """
 struct InterpolatedAirfoil{T} <: Airfoil{T}
-    itp::AbstractInterpolation{Complex{T}}
+    itp
     leading_edge::Complex{T}
     clockwise::Bool
     @doc """
@@ -279,9 +279,8 @@ struct InterpolatedAirfoil{T} <: Airfoil{T}
 end
 
 leading_edge(airfoil::InterpolatedAirfoil) = airfoil.leading_edge
-trailing_edge(airfoil::InterpolatedAirfoil) = airfoil.itp(0)
-position(airfoil::InterpolatedAirfoil, t::Real) = airfoil.itp(t)
+trailing_edge(airfoil::InterpolatedAirfoil{T}) where {T} = airfoil.itp(0)::Complex{T}
+position(airfoil::InterpolatedAirfoil{T}, t::Real) where {T} = airfoil.itp(t)::Complex{T}
 is_clockwise(airfoil::InterpolatedAirfoil) = airfoil.clockwise
-
 
 end # module
