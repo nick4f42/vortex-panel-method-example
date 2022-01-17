@@ -1,6 +1,6 @@
 name = "PanelMethod"
 uuid = "5d3386be-7ef9-4c42-a963-6bbdd2cc57f6"
-authors = ["Nick OBrien <pilotnick3@gmail.com>"]
+authors = ["Nick OBrien <nick4f42@gmail.com>"]
 version = "0.1.0"
 
 [deps]
